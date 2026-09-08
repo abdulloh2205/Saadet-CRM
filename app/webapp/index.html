@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#F7F5F0" id="meta-theme-color"/>
+  <title>Manager Bot | ToyStore Ops</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- APP_CONFIG: override API_BASE when frontend is hosted separately (e.g. Vercel).
+       Leave API_BASE as "" when frontend is served by the same FastAPI server. -->
+  <script>
+    window.APP_CONFIG = {
+      API_BASE: ""  // e.g. "https://your-app.onrender.com" for Vercel split deploy
+    };
+  </script>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="header-brand">
+    <div class="header-icon">🧸</div>
+    <div>
+      <div class="header-title" data-i18n="app_title">Manager Bot</div>
+      <div class="header-sub" data-i18n="app_sub">ToyStore Ops</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-badge" id="headerCapacity">
+      <span class="badge-dot green" id="capDot"></span>
+      <span class="header-badge-text" id="capText"><span data-i18n="lbl_uchtepa_pill">Учтепа</span> —/100</span>
+    </div>
+    <button class="theme-toggle-btn" id="btnThemeToggle">☀️</button>
+  </div>
+</header>
+
+<!-- ── PAGES ──────────────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- TAB 1: Сводка -->
+  <section class="page active" id="page-summary">
+    <p class="section-title" data-i18n="sec_finance">Финансы</p>
+    <div class="metrics-grid">
+      <div class="metric-tile">
+        <div class="metric-icon">💰</div>
+        <div class="metric-label" data-i18n="lbl_revenue">Выручка за месяц</div>
+        <div class="metric-value" id="mRevenue">—</div>
+        <div class="metric-sub" data-i18n="currency">сум</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-icon">📈</div>
+        <div class="metric-label" data-i18n="lbl_profit">Чистая прибыль</div>
+        <div class="metric-value" id="mProfit">—</div>
+        <div class="metric-sub" data-i18n="currency">сум</div>
+      </div>
+      <div class="metric-tile wide">
+        <div class="metric-icon">🏦</div>
+        <div class="metric-label" data-i18n="lbl_cash">В кассе (Cash Flow)</div>
+        <div class="metric-value" id="mCash">—</div>
+        <div class="metric-sub" data-i18n="currency">сум</div>
+      </div>
+    </div>
+
+    <p class="section-title" style="margin-top:18px;" data-i18n="sec_uchtepa">Склад выдачи</p>
+    <div class="capacity-card">
+      <div class="capacity-header">
+        <div>
+          <div class="capacity-title" data-i18n="lbl_uchtepa_title">Офис Учтепа (фасовка)</div>
+          <div class="capacity-sub" data-i18n="lbl_uchtepa_limit_info">Лимит: 100 коробок</div>
+        </div>
+        <div>
+          <div class="capacity-count" id="capCount">—<span>/100</span></div>
+        </div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="capBar" style="width:0%"></div>
+      </div>
+      <div class="capacity-footer">
+        <span id="capPct">Свободно: —</span>
+        <span id="capStatus">—</span>
+      </div>
+    </div>
+
+    <p class="section-title" style="margin-top:18px;" data-i18n="sec_stocks">Товары на складах</p>
+    <div id="summaryStocks"></div>
+  </section>
+
+  <!-- TAB 2: Игрушки и Склад -->
+  <section class="page" id="page-inventory">
+    <div class="warehouse-header">
+      <p class="section-title" style="margin:0;" data-i18n="sec_all_products">Все товары</p>
+      <button class="section-action" id="btnOpenTransfer" data-i18n="btn_transfer">📦 Переместить</button>
+    </div>
+    <div id="productList"></div>
+  </section>
+
+  <!-- TAB 3: Лиды и Заказы -->
+  <section class="page" id="page-orders">
+    <div class="orders-toggle">
+      <button class="toggle-btn active" id="btnToggleOrders" data-i18n="sec_orders">Заказы</button>
+      <button class="toggle-btn" id="btnToggleLeads" data-i18n="sec_leads">Лиды</button>
+    </div>
+    <div id="orderList"></div>
+    <div id="leadList" style="display:none;"></div>
+  </section>
+
+  <!-- TAB 4: Настройки -->
+  <section class="page" id="page-settings">
+    <p class="section-title" data-i18n="sec_profile">Профиль</p>
+    <div class="settings-card profile-card">
+      <div class="profile-icon">🧸</div>
+      <div class="profile-info">
+        <div class="profile-name">ToyStore Ops | Manager Bot</div>
+        <div class="profile-version">v2.1 Pro</div>
+      </div>
+    </div>
+
+    <p class="section-title" data-i18n="sec_preferences">Предпочтения</p>
+    <div class="settings-card">
+      <div class="settings-item" id="btnLangSettings">
+        <div class="settings-item-icon">🌐</div>
+        <div class="settings-item-body">
+          <div class="settings-item-title" data-i18n="lbl_lang">Язык интерфейса</div>
+          <div class="settings-item-sub" id="lblCurrentLang">Русский</div>
+        </div>
+        <div class="settings-item-action">›</div>
+      </div>
+      <div class="divider"></div>
+      <div class="settings-item" id="btnThemeSettings">
+        <div class="settings-item-icon">🌗</div>
+        <div class="settings-item-body">
+          <div class="settings-item-title" data-i18n="lbl_theme">Тема оформления</div>
+          <div class="settings-item-sub" id="lblCurrentTheme">Дневной режим (Светлый)</div>
+        </div>
+        <div class="settings-item-action">›</div>
+      </div>
+    </div>
+
+    <p class="section-title" data-i18n="sec_system">Система</p>
+    <div class="settings-card">
+      <div class="settings-item">
+        <div class="settings-item-icon">🔔</div>
+        <div class="settings-item-body">
+          <div class="settings-item-title" data-i18n="lbl_notif">Уведомления в бот</div>
+          <div class="settings-item-sub" data-i18n="val_notif">Активны (Заказы, Склад, Алерты)</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="settings-item">
+        <div class="settings-item-icon">📦</div>
+        <div class="settings-item-body">
+          <div class="settings-item-title" data-i18n="lbl_uchtepa_limit">Ограничение склада Учтепа</div>
+          <div class="settings-item-sub" data-i18n="val_uchtepa_limit">100 коробок (Максимальный объем)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── BOTTOM TAB BAR ─────────────────────────────────────────────────────── -->
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="summary">
+    <span class="tab-icon">📊</span>
+    <span data-i18n="tab_summary">Сводка</span>
+  </button>
+  <button class="tab-btn" data-tab="inventory">
+    <span class="tab-icon">📦</span>
+    <span data-i18n="tab_inventory">Склад</span>
+  </button>
+  <button class="tab-btn" data-tab="orders">
+    <span class="tab-icon">🛒</span>
+    <span data-i18n="tab_orders">Заказы</span>
+  </button>
+  <button class="tab-btn" data-tab="settings">
+    <span class="tab-icon">⚙️</span>
+    <span data-i18n="tab_settings">Настройки</span>
+  </button>
+</nav>
+
+<!-- ── TRANSFER MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="transferModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-i18n="mod_transfer_title">Переместить в офис</div>
+
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_product">Товар</label>
+      <select class="form-select" id="tfProduct">
+        <option value="" data-i18n="opt_select">— выберите —</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label" data-i18n="lbl_from">Откуда</label>
+        <select class="form-select" id="tfFrom"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="lbl_to">Куда</label>
+        <select class="form-select" id="tfTo"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="lbl_qty">Количество</label>
+      <input class="form-input" type="number" id="tfQty" min="1" max="100" placeholder="0"/>
+    </div>
+
+    <button class="btn-primary" id="btnDoTransfer" data-i18n="btn_do_transfer">Переместить</button>
+    <button class="btn-ghost" id="btnCancelTransfer" data-i18n="btn_cancel">Отмена</button>
+  </div>
+</div>
+
+<!-- ── LANG MODAL ─────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="langModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-i18n="mod_lang_title">Выберите язык / Tilni tanlang</div>
+    <div class="radio-list">
+      <label class="radio-item">
+        <input type="radio" name="lang" value="ru">
+        <span class="radio-label">🇷🇺 Русский</span>
+      </label>
+      <label class="radio-item">
+        <input type="radio" name="lang" value="uz">
+        <span class="radio-label">🇺🇿 O'zbekcha</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- ── THEME MODAL ────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="themeModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-i18n="mod_theme_title">Тема оформления / Mavzu rejimi</div>
+    <div class="radio-list">
+      <label class="radio-item">
+        <input type="radio" name="theme" value="light">
+        <span class="radio-label" data-i18n="theme_light">☀️ Дневной режим (Светлый)</span>
+      </label>
+      <label class="radio-item">
+        <input type="radio" name="theme" value="dark">
+        <span class="radio-label" data-i18n="theme_dark">🌙 Ночной режим (Тёмный)</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: saadet-crm-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: WEBAPP_URL
+        sync: false
+      - key: ADMIN_CHAT_ID
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./saodat_erp.db
+      - key: APP_HOST
+        value: 0.0.0.0
+      - key: APP_PORT
+        value: "10000"

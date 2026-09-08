@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables — NEVER commit secrets
+.env
+.env.*
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cloudflare / tunnel binaries
+cloudflared.exe
+cloudflared
+
+# Logs
+*.log
+logs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Node / Vercel
+node_modules/
+.vercel/
+
+# IDE / editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test artifacts
+test_*.py
