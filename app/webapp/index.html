@@ -7,11 +7,10 @@
   <title>Manager Bot | ToyStore Ops</title>
   <link rel="stylesheet" href="styles.css"/>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- APP_CONFIG: override API_BASE when frontend is hosted separately (e.g. Vercel).
-       Leave API_BASE as "" when frontend is served by the same FastAPI server. -->
+  <!-- API_BASE: Render backend URL for Vercel split deployment -->
   <script>
     window.APP_CONFIG = {
-      API_BASE: ""  // e.g. "https://your-app.onrender.com" for Vercel split deploy
+      API_BASE: "https://saadet-crm.onrender.com"
     };
   </script>
 </head>
