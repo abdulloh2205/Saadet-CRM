@@ -17,7 +17,8 @@ from app.api.public_router import router as public_router
 from app.api.lead_router import router as lead_router
 from app.bot.handlers import build_dp, setup_bot_ui
 from app.config import settings
-from app.database import init_db
+from app.database import init_db, SessionLocal
+from app.services.seed_service import seed_all
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,6 +33,10 @@ async def lifespan(app: FastAPI):
     logger.info("Initialising database...")
     await init_db()
     logger.info("Database ready.")
+    # Auto-seed on first boot (idempotent — skips if data already exists)
+    async with SessionLocal() as db:
+        result = await seed_all(db)
+        logger.info(f"Seed: {result}")
     yield
     logger.info("Shutting down.")
 
