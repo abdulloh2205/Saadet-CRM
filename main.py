@@ -80,6 +80,14 @@ async def health():
     return {"status": "ok", "version": "2.0.0", "app": "ToyStore Ops"}
 
 
+@app.get("/api/seed")
+async def manual_seed():
+    """Manually trigger database seeding. Safe to call multiple times (idempotent)."""
+    async with SessionLocal() as db:
+        result = await seed_all(db)
+    return {"seeded": True, "result": result}
+
+
 async def run_bot():
     if settings.bot_token == "CHANGE_ME":
         logger.warning("BOT_TOKEN not set — bot polling disabled.")
